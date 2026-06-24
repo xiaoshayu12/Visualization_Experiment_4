@@ -19,6 +19,7 @@
     <button id="btn-sample" class="active">采样模式</button>
     <button id="btn-reset" title="清除所有筛选">↺ 重置</button>
     <span class="filter-indicator" id="filter-indicator">已筛选</span>
+    <span class="dimension-labels" id="dimension-labels"></span>
     <span class="info-badge" id="render-info"></span>
   </div>
 
@@ -36,8 +37,7 @@
         <div class="card-title">
           ★ 异常数据分析图 <span class="badge badge-main">平行坐标</span>
           <span style="margin-left:auto;font-size:9px;color:#7a8fa6;">异常模型:</span>
-          <button class="pc-model-btn active" data-method="iqr">IQR</button>
-          <button class="pc-model-btn" data-method="lof">LOF</button>
+          <button class="pc-model-btn active" data-method="lof">LOF</button>
           <button class="pc-model-btn" data-method="autoencoder">AE</button>
         </div>
         <div class="card-subtitle">10 维度平行坐标 + 异常标记轴 · 红线=异常点 · 蓝线=正常点</div>
@@ -71,25 +71,20 @@
           <div class="info-section-label-mt">海-气耦合评分</div>
           <div id="coupling-score">--</div>
           <div id="coupling-detail" style="font-size:10px;color:#7a8fa6;"></div>
-          <div style="margin-top:12px;border-top:1px solid #e0e4e8;padding-top:8px;">
-            <div class="info-section-label">
-              模型分析 <span style="font-size:9px;color:#7a8fa6;font-weight:400;" id="model-status">···</span>
+          <div class="anomaly-section" id="anomaly-section">
+            <div class="anomaly-tabs">
+              <button class="anomaly-tab active" data-tab="lof">LOF 异常检测</button>
+              <button class="anomaly-tab" data-tab="ae">Autoencoder 异常检测</button>
+              <button class="anomaly-run-btn" id="btn-anomaly-run">▸ 加载检测结果</button>
             </div>
-            <div id="model-panel" style="font-size:9px;color:#7a8fa6;"></div>
-          </div>
-<div class="lof-section" id="lof-section">
-            <div class="lof-header">
-              <span>LOF 密度异常检测</span>
-              <button id="btn-lof-run">▸ 加载检测结果</button>
+            <div class="anomaly-content">
+              <div class="anomaly-panel" id="lof-panel">
+                <div id="lof-result" class="lof-result hidden"></div>
+              </div>
+              <div class="anomaly-panel hidden" id="ae-panel">
+                <div id="ae-result" class="lof-result hidden"></div>
+              </div>
             </div>
-            <div id="lof-result" class="lof-result hidden"></div>
-          </div>
-<div class="lof-section" id="ae-section">
-            <div class="lof-header">
-              <span>Autoencoder 异常检测</span>
-              <button id="btn-ae-run">▸ 加载检测结果</button>
-            </div>
-            <div id="ae-result" class="lof-result hidden"></div>
           </div>
         </div>
       </div>

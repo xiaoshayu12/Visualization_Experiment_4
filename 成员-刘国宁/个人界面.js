@@ -36,6 +36,13 @@ const Adapter = {
     humidity: "Hum", current_speed: "Curr", chlorophyll: "Chl"
   },
 
+  FIELD_CN: {
+    wind_speed: "风速", wind_dir: "风向", pressure: "气压",
+    precipitation: "降水", co2: "CO₂浓度", humidity: "湿度",
+    sst: "海表温度", salinity: "盐度",
+    current_speed: "海流", chlorophyll: "叶绿素"
+  },
+
   getColor(r) { return this.COLORS[r] || "#999"; },
   getRegions() { return [...this.REGIONS]; }
 };
@@ -93,10 +100,11 @@ let lofResult = null;
 let lofOverlayActive = false;
 let aeResult = null;
 let aeOverlayActive = false;
-let pcAnomalyMethod = 'iqr';
+let pcAnomalyMethod = 'lof';
 let pcAnomalyData = null;
+let pcSelectedIds = new Set();
+let pcHoveredId = null;
 
-let modelCache = null;
 const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) || '/api';
 
 
@@ -156,33 +164,6 @@ function couplingScore(mat) {
     });
   });
   return count ? sum / count : 0;
-}
-
-// ── IQR 本地异常检测 ─────────────────────────────────
-function computeIqrAnomalies(data) {
-  const fields = Adapter.ALL_NUMERIC_FIELDS;
-  // 对每个字段计算 IQR 边界
-  const bounds = {};
-  fields.forEach(f => {
-    const vals = data.map(d => d[f]).filter(v => v != null && isFinite(v)).sort(d3.ascending);
-    const q1 = d3.quantile(vals, 0.25);
-    const q3 = d3.quantile(vals, 0.75);
-    const iqr = q3 - q1;
-    bounds[f] = { lo: q1 - 1.5 * iqr, hi: q3 + 1.5 * iqr };
-  });
-  // 标记异常
-  const result = {};
-  data.forEach(d => {
-    let isAnom = false;
-    for (const f of fields) {
-      if (d[f] < bounds[f].lo || d[f] > bounds[f].hi) {
-        isAnom = true;
-        break;
-      }
-    }
-    result[d.id] = isAnom;
-  });
-  return result;
 }
 
 // ── 数据准备：应用所有过滤器 ──────────────────────────────
@@ -265,6 +246,8 @@ function initInfoToggle() {
 function initToolbar() {
   d3.select("#btn-reset").on("click", () => {
     hiddenRegions = new Set();
+    pcSelectedIds = new Set();
+    pcHoveredId = null;
     resetBivariateView();
     corrMatrix = computeCorrelationMatrix(cleanData);
     fullRender();
@@ -276,9 +259,20 @@ function initToolbar() {
     fullRender();
   });
 
-  // LOF 运行按钮
-  d3.select("#btn-lof-run").on("click", function () {
-    fetchLofResult(20);
+  // 异常检测 tab 切换
+  d3.selectAll(".anomaly-tab").on("click", function () {
+    const tab = this.dataset.tab;
+    d3.selectAll(".anomaly-tab").classed("active", false);
+    d3.select(this).classed("active", true);
+    d3.select("#lof-panel").classed("hidden", tab !== "lof");
+    d3.select("#ae-panel").classed("hidden", tab !== "ae");
+  });
+
+  // 统一运行按钮 — 根据当前激活 tab 决定调用 LOF 还是 AE
+  d3.select("#btn-anomaly-run").on("click", function () {
+    const activeTab = d3.select(".anomaly-tab.active").attr("data-tab");
+    if (activeTab === "lof") fetchLofResult(20);
+    else fetchAeResult();
   });
 
   // LOF 叠加按钮
@@ -289,11 +283,6 @@ function initToolbar() {
       .style("color", lofOverlayActive ? "#fff" : "#5a6d80")
       .style("border-color", lofOverlayActive ? "#cc3333" : "#c8d6e5");
     fullRender();
-  });
-
-  // Autoencoder 运行按钮
-  d3.select("#btn-ae-run").on("click", function () {
-    fetchAeResult();
   });
 
   // Autoencoder 叠加按钮
@@ -761,61 +750,18 @@ function updateInfoPanel(data) {
 
   d3.select("#filter-indicator").style("display", hiddenRegions.size > 0 ? "inline" : "none");
   d3.select("#render-info").text(`显示 ${data.length} 条 | ${Adapter.ALL_NUMERIC_FIELDS.length} 维 | ${useSampling ? "采样" : "全量"}`);
+
+  const dimLabels = Adapter.ALL_NUMERIC_FIELDS
+    .map(f => `${Adapter.FIELD_SHORT[f]}（${Adapter.FIELD_CN[f]}）`)
+    .join(" | ");
+  d3.select("#dimension-labels").text(dimLabels);
 }
 
 
-// --- 11. 模型分析面板 ---
-
-async function fetchModelStatus() {
-  const statusEl = d3.select("#model-status");
-  statusEl.text("加载中...").style("color", "#7a8fa6");
-
-  try {
-    const res = await fetch(`${API_BASE}/model/status`);
-    modelCache = await res.json();
-    renderModelPanel();
-  } catch (err) {
-    console.warn("模型 API 请求失败:", err.message);
-    modelCache = null;
-    renderModelPanel();
-  }
-}
-
-function renderModelPanel() {
-  const container = d3.select("#model-panel").html("");
-  const statusEl = d3.select("#model-status");
-
-  if (!modelCache) {
-    statusEl.text("离线").style("color", "#cc3333");
-    container.append("div").attr("class", "model-empty")
-      .text("模型 API 未连接 — 请启动 backend/app.py");
-    return;
-  }
-
-  const anyReady = modelCache.any_ready;
-  const modelCount = (modelCache.models || []).length;
-
-  statusEl.text(anyReady
-    ? `就绪 (${modelCache.models.filter(m => m.loaded).length}/${modelCount})`
-    : `${modelCount} 个待接入`)
-    .style("color", anyReady ? "#009E73" : "#E69F00");
-
-  (modelCache.models || []).filter(m => m.loaded).forEach(m => {
-    const card = container.append("div").attr("class", "model-card");
-    card.append("span").attr("class", "model-name").text(m.name);
-    card.append("span").attr("class", "model-ver").text(m.version);
-    card.append("span")
-      .attr("class", "model-badge " + (m.loaded ? "ready" : "placeholder"))
-      .text(m.status);
-    card.append("div").attr("class", "model-desc").text(m.description);
-  });
-}
-
-
-// --- 11b. LOF 密度感知异常检测 ---
+// --- 11. LOF 密度感知异常检测 ---
 
 async function fetchLofResult(n_neighbors) {
-  const btn = d3.select("#btn-lof-run");
+  const btn = d3.select("#btn-anomaly-run");
   btn.text("加载中...").attr("disabled", true);
   const resultEl = d3.select("#lof-result");
   resultEl.style("display", "block").html("<div class='lof-loading'>LOF 检测结果加载中...</div>");
@@ -938,7 +884,7 @@ function applyLofOverlay(mapG, projection, validData) {
 // --- 11c. Autoencoder 深度学习异常检测 ---
 
 async function fetchAeResult() {
-  const btn = d3.select("#btn-ae-run");
+  const btn = d3.select("#btn-anomaly-run");
   btn.text("加载中...").attr("disabled", true);
   const resultEl = d3.select("#ae-result");
   resultEl.style("display", "block").html("<div class='lof-loading'>Autoencoder 检测结果加载中...</div>");
@@ -1065,9 +1011,7 @@ function applyAeOverlay(mapG, projection, validData) {
 // ── 根据所选模型更新异常标记 ─────────────────────────────────
 async function updateAnomalyFlags() {
   const data = cleanData;
-  if (pcAnomalyMethod === 'iqr') {
-    pcAnomalyData = computeIqrAnomalies(data);
-  } else if (pcAnomalyMethod === 'lof') {
+  if (pcAnomalyMethod === 'lof') {
     if (!lofResult) await fetchLofResult(20);
     if (lofResult) {
       pcAnomalyData = {};
@@ -1082,6 +1026,53 @@ async function updateAnomalyFlags() {
   }
 }
 
+// ── 统一管理平行坐标线视觉状态 ──────────────────────────
+function applyPcLineStyles() {
+  const hasHover = pcHoveredId !== null;
+  const hasSelection = pcSelectedIds.size > 0;
+
+  d3.selectAll("#pc-svg .pc-line").each(function () {
+    const el = d3.select(this);
+    const id = this.getAttribute("data-id");
+    const isAnomaly = el.classed("pc-anomaly");
+    const baseWidth = isAnomaly ? 1 : 0.8;
+    const defaultOpacity = isAnomaly ? 0.4 : 0.06;
+
+    if (hasHover && id === pcHoveredId) {
+      el.interrupt()
+        .attr("stroke-opacity", 1)
+        .attr("stroke-width", 2.5)
+        .raise();
+    } else if (!hasHover && pcSelectedIds.has(id)) {
+      el.interrupt()
+        .attr("stroke-opacity", 0.8)
+        .attr("stroke-width", 2);
+    } else if (hasHover && pcSelectedIds.has(id)) {
+      el.interrupt()
+        .attr("stroke-opacity", 0.5)
+        .attr("stroke-width", baseWidth);
+    } else if (hasHover || hasSelection) {
+      el.interrupt()
+        .attr("stroke-opacity", 0.02)
+        .attr("stroke-width", baseWidth);
+    } else {
+      el.interrupt()
+        .attr("stroke-opacity", defaultOpacity)
+        .attr("stroke-width", baseWidth);
+    }
+  });
+
+  // 控制命中层交互：选中状态下锁定非选中线
+  if (pcSelectedIds.size > 0) {
+    d3.selectAll("#pc-svg .pc-hit").style("pointer-events", function () {
+      const id = this.getAttribute("data-id");
+      return pcSelectedIds.has(id) ? "auto" : "none";
+    });
+  } else {
+    d3.selectAll("#pc-svg .pc-hit").style("pointer-events", "auto");
+  }
+}
+
 // ── 绘制平行坐标图 ──────────────────────────────────────────
 function drawParallelCoords(data) {
   if (!pcG) return;
@@ -1089,7 +1080,7 @@ function drawParallelCoords(data) {
 
   const fields = Adapter.ALL_NUMERIC_FIELDS; // 10 个维度
   const n = fields.length;
-  const padLeft = 50, padRight = 50, padTop = 20, padBottom = 24;
+  const padLeft = 50, padRight = 50, padTop = 32, padBottom = 16;
   const fullW = 700, fullH = 440;
   const chartW = fullW - padLeft - padRight;
   const chartH = fullH - padTop - padBottom;
@@ -1109,7 +1100,7 @@ function drawParallelCoords(data) {
     return;
   }
 
-  if (!pcAnomalyData) { pcAnomalyData = computeIqrAnomalies(valid); }
+  if (!pcAnomalyData) { pcAnomalyData = {}; }
 
   // 分离正常和异常
   const normals = valid.filter(d => !pcAnomalyData[d.id]);
@@ -1143,48 +1134,81 @@ function drawParallelCoords(data) {
 
   const g = pcG.append("g").attr("transform", `translate(${padLeft},${padTop})`);
 
-  // ── 1. 正常线条（先绘制，在底层） ──
+  // 公共交互处理器（供 hit 层使用）
+  function onLineEnter(event, d) {
+    // 如果有已选中的线，且当前悬停的不是选中的线，则忽略
+    if (pcSelectedIds.size > 0 && !pcSelectedIds.has(String(d.id))) {
+      return;
+    }
+    pcHoveredId = String(d.id);
+    applyPcLineStyles();
+    const isAnomaly = pcAnomalyData[d.id];
+    const parts = fields.map(f => {
+      const val = (+d[f]).toFixed(2);
+      if (isAnomaly) {
+        const b = fieldBounds[f];
+        const isExtreme = (b && (d[f] < b.lo || d[f] > b.hi)) ? " ⚠" : "";
+        return `${Adapter.FIELD_SHORT[f]}: ${val}${isExtreme}`;
+      }
+      return `${Adapter.FIELD_SHORT[f]}: ${val}`;
+    }).join("<br>");
+    const html = isAnomaly
+      ? `<strong>异常点 · ${d.region} · ${d.time}</strong><br>${parts}<br><span style="color:#cc3333;">模型: ${pcAnomalyMethod.toUpperCase()}</span>`
+      : `<strong>正常点 · ${d.region} · ${d.time}</strong>${parts}`;
+    showTooltip(event, html);
+  }
+  function onLineLeave() {
+    pcHoveredId = null;
+    applyPcLineStyles();
+    hideTooltip();
+  }
+  function onLineClick(event, d) {
+    event.stopPropagation();
+    const id = String(d.id);
+    if (pcSelectedIds.has(id)) {
+      pcSelectedIds.delete(id);  // 取消选中 → 解锁全部
+    } else {
+      pcSelectedIds.clear();     // 清除之前的选中（单选）
+      pcSelectedIds.add(id);     // 选中当前线 → 其他线锁定
+    }
+    applyPcLineStyles();
+  }
+
+  // ── 1. 正常线条视觉层（底层，不响应事件） ──
   g.selectAll(".pc-normal").data(normals).join("path")
     .attr("class", "pc-line pc-normal")
+    .attr("data-id", d => String(d.id))
     .attr("d", d => makeLine(d))
     .attr("fill", "none")
     .attr("stroke", "#56B4E9")
     .attr("stroke-width", 0.8)
     .attr("stroke-opacity", 0.06)
-    .on("mouseenter", function (event, d) {
-      d3.select(this).attr("stroke-opacity", 0.9).attr("stroke-width", 2).raise();
-      const parts = fields.map(f => `${Adapter.FIELD_SHORT[f]}: ${(+d[f]).toFixed(2)}`).join("<br>");
-      const html = `<strong>正常点 · ${d.region} · ${d.time}</strong>${parts}`;
-      showTooltip(event, html);
-    })
-    .on("mouseleave", function () {
-      d3.select(this).attr("stroke-opacity", 0.06).attr("stroke-width", 0.8);
-      hideTooltip();
-    });
+    .attr("pointer-events", "none");
 
-  // ── 2. 异常线条（后绘制，在上层） ──
+  // ── 2. 异常线条视觉层（上层，不响应事件） ──
   g.selectAll(".pc-anomaly").data(anomalies).join("path")
     .attr("class", "pc-line pc-anomaly")
+    .attr("data-id", d => String(d.id))
     .attr("d", d => makeLine(d))
     .attr("fill", "none")
     .attr("stroke", "#cc3333")
     .attr("stroke-width", 1)
     .attr("stroke-opacity", 0.4)
-    .on("mouseenter", function (event, d) {
-      d3.select(this).attr("stroke-opacity", 1).attr("stroke-width", 2.5).raise();
-      const parts = fields.map(f => {
-        const val = (+d[f]).toFixed(2);
-        const b = fieldBounds[f];
-        const isExtreme = (b && (d[f] < b.lo || d[f] > b.hi)) ? " ⚠" : "";
-        return `${Adapter.FIELD_SHORT[f]}: ${val}${isExtreme}`;
-      }).join("<br>");
-      const html = `<strong>异常点 · ${d.region} · ${d.time}</strong>${parts}<br><span style="color:#cc3333;">模型: ${pcAnomalyMethod.toUpperCase()}</span>`;
-      showTooltip(event, html);
-    })
-    .on("mouseleave", function () {
-      d3.select(this).attr("stroke-opacity", 0.4).attr("stroke-width", 1);
-      hideTooltip();
-    });
+    .attr("pointer-events", "none");
+
+  // ── 3. 透明交互层（最上层，宽线确保可点击） ──
+  g.selectAll(".pc-hit").data(valid).join("path")
+    .attr("class", "pc-hit")
+    .attr("data-id", d => String(d.id))
+    .attr("d", d => makeLine(d))
+    .attr("fill", "none")
+    .attr("stroke", "transparent")
+    .attr("stroke-width", 12)
+    .style("cursor", "pointer")
+    .style("pointer-events", "auto")
+    .on("mouseenter", onLineEnter)
+    .on("mouseleave", onLineLeave)
+    .on("click", onLineClick);
 
   // 预计算各字段 IQR 边界（供 tooltip 标记极值）
   const fieldBounds = {};
@@ -1229,7 +1253,7 @@ function drawParallelCoords(data) {
     .text("异常标记");
 
   // ── 5. 图例 ──
-  const legX = 10, legY = chartH - 8;
+  const legX = 10, legY = -12;
   const legG = g.append("g").attr("transform", `translate(${legX},${legY})`);
   legG.append("line").attr("x1", 0).attr("y1", 0).attr("x2", 25).attr("y2", 0)
     .attr("stroke", "#56B4E9").attr("stroke-width", 1.5).attr("stroke-opacity", 0.6);
@@ -1241,6 +1265,7 @@ function drawParallelCoords(data) {
   legG.append("text").attr("x", 140).attr("y", 3)
     .attr("font-size", "7px").attr("fill", "#7a8fa6")
     .text(`异常: ${anomalies.length}/${valid.length} (${(anomalies.length / valid.length * 100).toFixed(1)}%) · ${pcAnomalyMethod.toUpperCase()}`);
+  applyPcLineStyles();
 }
 
 // --- 13. 全量渲染 ---
@@ -1249,7 +1274,6 @@ function fullRender() {
   const data = prepareData();
   if (!infoCollapsed) {
     updateInfoPanel(data);
-    renderModelPanel();
     if (lofResult) renderLofPanel();
     if (aeResult) renderAePanel();
   }
@@ -1280,8 +1304,14 @@ async function init() {
     imputeMissing(raw);
     cleanData = raw;
     corrMatrix = computeCorrelationMatrix(raw);
-    // 初始化 IQR 异常标记
-    pcAnomalyData = computeIqrAnomalies(raw);
+
+    // 启动时自动加载 LOF 异常检测结果
+    try {
+      await updateAnomalyFlags();
+    } catch (e) {
+      console.warn("自动加载异常检测失败:", e.message);
+      pcAnomalyData = {};
+    }
 
     try {
       const world = await d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
@@ -1289,9 +1319,6 @@ async function init() {
     } catch (e) { console.warn("世界地图加载失败:", e.message); }
 
     fullRender();
-
-    // 异步加载模型状态
-    fetchModelStatus();
   } catch (err) {
     console.error("系统初始化失败:", err);
     const errMsg = err.message || String(err);
