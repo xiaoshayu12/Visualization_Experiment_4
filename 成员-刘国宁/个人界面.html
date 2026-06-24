@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>海气耦合与异常检测 · 全球海洋大气耦合时空可视分析系统</title>
+<link rel="stylesheet" href="../static/css/global.css" />
+<link rel="stylesheet" href="../static/css/nav.css" />
+<link rel="stylesheet" href="个人界面.css" />
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h2>分析海洋-大气多维耦合关系与异常模式</h2>
+    <div class="subtitle">全球海洋-大气耦合时空可视分析系统 | IFREMER Argo + ERA5 | 3600条 | 6海区 | 2020-2022</div>
+  </div>
+
+  <div class="toolbar">
+    <button id="btn-sample" class="active">采样模式</button>
+    <button id="btn-reset" title="清除所有筛选">↺ 重置</button>
+    <span class="filter-indicator" id="filter-indicator">已筛选</span>
+    <span class="info-badge" id="render-info"></span>
+  </div>
+
+  <div class="main-layout">
+    <div class="main-area">
+      <div class="card" id="heatmap-thumb-card">
+        <div class="card-title">
+          ★ 多维相关性热力图 <span class="badge badge-main">缩略图·入口</span>
+        </div>
+        <div class="card-subtitle">Pearson r 矩阵 · RdBu发散色 · 下三角矩阵 · 点击单元格查看变量间关系</div>
+        <div class="chart-wrap"><svg id="hm-svg"></svg></div>
+      </div>
+
+      <div class="card" id="parallel-coord-card">
+        <div class="card-title">
+          ★ 异常数据分析图 <span class="badge badge-main">平行坐标</span>
+          <span style="margin-left:auto;font-size:9px;color:#7a8fa6;">异常模型:</span>
+          <button class="pc-model-btn active" data-method="iqr">IQR</button>
+          <button class="pc-model-btn" data-method="lof">LOF</button>
+          <button class="pc-model-btn" data-method="autoencoder">AE</button>
+        </div>
+        <div class="card-subtitle">10 维度平行坐标 + 异常标记轴 · 红线=异常点 · 蓝线=正常点</div>
+        <div class="chart-wrap"><svg id="pc-svg"></svg></div>
+      </div>
+
+      <div class="card collapsed" id="bivariate-card">
+        <div class="card-title">
+           耦合时变地图 <span class="badge badge-aux">热力图联动</span>
+<button id="btn-lof-overlay" class="bv-close-btn hidden" title="LOF 异常叠加">◉</button>
+<button id="btn-ae-overlay" class="bv-close-btn hidden" title="Autoencoder 异常叠加">⊙</button>
+          <button class="bv-close-btn" id="bv-close" title="关闭关系图">✕</button>
+        </div>
+        <div class="card-subtitle" id="bv-subtitle">点击热力图单元格，在地图上探索海-气耦合时变演变</div>
+        <div class="chart-wrap"><svg id="bv-svg"></svg></div>
+        <div class="bv-shape-hint hidden" id="bv-shape-hint"></div>
+      </div>
+    </div>
+
+    <div class="side-panel" id="side-panel">
+      <div class="card" id="info-card">
+        <div class="card-title">
+          <span class="info-title-text">▾ 信息面板</span>
+        </div>
+        <div class="info-body">
+          <div style="font-size:10px;color:#7a8fa6;margin-bottom:10px;">图例 · 统计 · 耦合评分 · 筛选状态</div>
+          <div class="info-section-label">海区图例（点击筛选）</div>
+          <div class="legend-list" id="legend-list"></div>
+          <div class="info-section-label" style="margin-top:6px;">数据统计摘要</div>
+          <div id="stats-panel"></div>
+          <div class="info-section-label-mt">海-气耦合评分</div>
+          <div id="coupling-score">--</div>
+          <div id="coupling-detail" style="font-size:10px;color:#7a8fa6;"></div>
+          <div style="margin-top:12px;border-top:1px solid #e0e4e8;padding-top:8px;">
+            <div class="info-section-label">
+              模型分析 <span style="font-size:9px;color:#7a8fa6;font-weight:400;" id="model-status">···</span>
+            </div>
+            <div id="model-panel" style="font-size:9px;color:#7a8fa6;"></div>
+          </div>
+<div class="lof-section" id="lof-section">
+            <div class="lof-header">
+              <span>LOF 密度异常检测</span>
+              <button id="btn-lof-run">▸ 加载检测结果</button>
+            </div>
+            <div id="lof-result" class="lof-result hidden"></div>
+          </div>
+<div class="lof-section" id="ae-section">
+            <div class="lof-header">
+              <span>Autoencoder 异常检测</span>
+              <button id="btn-ae-run">▸ 加载检测结果</button>
+            </div>
+            <div id="ae-result" class="lof-result hidden"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script src="../static/js/config.js"></script>
+<script src="../static/js/nav.js"></script>
+<script src="个人界面.js"></script>
+</body>
+</html>

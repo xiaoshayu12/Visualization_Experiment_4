@@ -1,0 +1,73 @@
+/* ================================================================
+   全局导航栏样式
+   ================================================================ */
+
+#global-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #1a2b4a 0%, #0f1d33 100%);
+  color: #fff;
+  font-family: var(--font-family, "PingFang SC", "Microsoft YaHei", sans-serif);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ── 系统标题 ── */
+#global-nav .nav-brand {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Tab 列表 ── */
+#global-nav .nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#global-nav .nav-tab {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 4px);
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  border: none;
+  background: none;
+  font-family: var(--font-family, "PingFang SC", "Microsoft YaHei", sans-serif);
+}
+
+#global-nav .nav-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#global-nav .nav-tab.active {
+  color: #fff;
+  background: var(--accent, #0072B2);
+}
+
+/* ── 右侧预留区域（IP 显示等） ── */
+#global-nav .nav-info {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd C:\\\\Users\\\\DELL\\\\Desktop\\\\文件\\\\可视化\\\\实验三:*)",
+      "Bash(cd /c/Users/DELL/Desktop/文件/可视化/实验三 && python -X utf8 generate_reports.py 2>&1)",
+      "Bash(python:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

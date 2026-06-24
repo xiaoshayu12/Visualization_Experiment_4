@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>碳汇压力分析 · 全球海洋大气耦合时空可视分析系统</title>
+  <link rel="stylesheet" href="assets/global.css" />
+  <link rel="stylesheet" href="assets/nav.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      font-family: var(--font-family, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif);
+      background: var(--bg-primary, #f5f7fa);
+      color: var(--text-primary, #2d3e50);
+      line-height: 1.45;
+    }
+    .page {
+      min-height: calc(100vh - 44px);
+      display: flex;
+      flex-direction: column;
+    }
+    .page-topbar {
+      position: sticky;
+      top: 44px; /* below nav */
+      z-index: 19;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--border, #e4e8ec);
+      backdrop-filter: blur(10px);
+    }
+    .page-topbar-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 14px 18px 12px;
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+    }
+    h1 {
+      font-size: 20px;
+      color: var(--text-title, #1a2b4a);
+      font-weight: 850;
+      letter-spacing: 0;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-subtitle, #7a8fa6);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--accent-light, #e6f2fa);
+      color: var(--accent, #0072B2);
+      font-weight: 750;
+    }
+    .topic-note {
+      margin-top: 7px;
+      font-size: 12px;
+      color: #6e8195;
+      max-width: 880px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #53677e;
+      font-weight: 800;
+    }
+    select, button {
+      height: 31px;
+      border: 1px solid #c8d6e3;
+      background: #fff;
+      color: #24384e;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    select {
+      min-width: 150px;
+      padding: 0 8px;
+    }
+    input[type="range"] {
+      accent-color: #0072B2;
+      width: 150px;
+    }
+    button {
+      padding: 0 11px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    button:hover {
+      color: #0072B2;
+      border-color: #0072B2;
+      background: #f6fbff;
+    }
+    .month-readout {
+      min-width: 68px;
+      color: #0072B2;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+    main {
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 14px 18px 22px;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(520px, 1.05fr) minmax(420px, .95fr);
+      grid-template-rows: auto auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #dce7ef;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 5px rgba(20, 42, 67, .045);
+    }
+    .panel-head {
+      height: 38px;
+      padding: 9px 12px 0;
+      border-bottom: 1px solid #edf2f6;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .panel-title {
+      font-size: 13px;
+      color: #223a52;
+      font-weight: 850;
+    }
+    .panel-sub {
+      font-size: 11px;
+      color: #7b8da1;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .kpi-strip {
+      grid-column: 1 / span 2;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .kpi {
+      min-height: 78px;
+      background: #fff;
+      border: 1px solid #dce7ef;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 5px rgba(20, 42, 67, .045);
+    }
+    .kpi .label {
+      font-size: 12px;
+      color: #6e8195;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+    .kpi .value {
+      font-size: 23px;
+      font-weight: 850;
+      color: #10263f;
+      line-height: 1.05;
+    }
+    .kpi .hint {
+      margin-top: 5px;
+      font-size: 11px;
+      color: #8193a6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .region-cards {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .region-card {
+      border: 1px solid #e0e9f1;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 144px;
+      background: #fbfdff;
+      cursor: pointer;
+      transition: border-color .15s, transform .15s, box-shadow .15s;
+      position: relative;
+    }
+    .region-card:hover {
+      transform: translateY(-1px);
+      border-color: #96b9d3;
+      box-shadow: 0 4px 12px rgba(30, 73, 102, .08);
+    }
+    .region-card.active {
+      border-color: #0072B2;
+      box-shadow: 0 0 0 2px rgba(0, 114, 178, .12);
+    }
+    .region-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .region-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 850;
+      color: #1a2b4a;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .score-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .score {
+      font-size: 31px;
+      font-weight: 900;
+      color: #10263f;
+      line-height: 1;
+    }
+    .score-label {
+      font-size: 11px;
+      color: #7d8fa2;
+      font-weight: 750;
+      text-align: right;
+    }
+    .spark {
+      width: 100%;
+      height: 36px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .card-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+      color: #63778c;
+    }
+    .card-foot b {
+      color: #1a2b4a;
+      font-weight: 850;
+    }
+    .heat-panel {
+      min-height: 396px;
+    }
+    .heat-wrap {
+      padding: 8px 12px 12px;
+      height: 358px;
+    }
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .explain-panel {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: minmax(360px, .86fr) minmax(520px, 1.14fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+    .explain-summary {
+      padding: 14px 14px 12px;
+      min-height: 398px;
+    }
+    .explain-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .explain-title h2 {
+      font-size: 18px;
+      color: #10263f;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+    .chosen-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 14px;
+      background: #e8f4fd;
+      color: #0067a0;
+      padding: 0 9px;
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .summary-text {
+      font-size: 13px;
+      color: #51667b;
+      margin-bottom: 12px;
+    }
+    .insight-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+    .insight {
+      border: 1px solid #e3ebf2;
+      border-radius: 7px;
+      background: #f8fbfd;
+      padding: 9px 10px;
+    }
+    .insight b {
+      display: block;
+      color: #223a52;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    .insight span {
+      display: block;
+      color: #6b7f94;
+      font-size: 12px;
+    }
+    .formula {
+      border-left: 4px solid #0072B2;
+      background: #f1f8fd;
+      border-radius: 5px;
+      padding: 10px 12px;
+      color: #526b82;
+      font-size: 12px;
+    }
+    .formula b {
+      color: #10263f;
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 220px 220px;
+      gap: 12px;
+    }
+    .chart-body {
+      height: calc(100% - 38px);
+      padding: 8px 10px 10px;
+    }
+    .axis text {
+      fill: #65798e;
+      font-size: 10px;
+    }
+    .axis path,
+    .axis line {
+      stroke: #d6e2eb;
+    }
+    .grid-line {
+      stroke: #e3edf3;
+      stroke-width: 1;
+    }
+    .heat-cell {
+      stroke: #fff;
+      stroke-width: 1.1;
+      cursor: pointer;
+      transition: stroke .12s, opacity .12s;
+    }
+    .heat-cell:hover,
+    .heat-cell.active {
+      stroke: #10263f;
+      stroke-width: 2;
+    }
+    .timeline-line {
+      fill: none;
+      stroke: #0072B2;
+      stroke-width: 2.2;
+    }
+    .timeline-area {
+      fill: rgba(0,114,178,.12);
+    }
+    .driver-bar {
+      cursor: pointer;
+    }
+    .scatter-dot {
+      stroke: rgba(255,255,255,.78);
+      stroke-width: .7;
+      cursor: pointer;
+      opacity: .72;
+    }
+    .scatter-dot.highlight {
+      stroke: #10263f;
+      stroke-width: 2;
+      opacity: .96;
+    }
+    .state-row {
+      cursor: pointer;
+    }
+    .link {
+      color: #0072B2;
+      font-weight: 850;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 9999;
+      max-width: 300px;
+      border-radius: 7px;
+      background: rgba(16, 38, 63, .95);
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.65;
+      box-shadow: 0 10px 28px rgba(0,0,0,.18);
+      transition: opacity .12s;
+    }
+    #tooltip strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    @media (max-width: 1120px) {
+      .topbar-inner,
+      .overview-grid,
+      .explain-panel {
+        grid-template-columns: 1fr;
+      }
+      .kpi-strip {
+        grid-column: 1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .region-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .controls {
+        justify-content: flex-start;
+      }
+    }
+    @media (max-width: 680px) {
+      .region-cards,
+      .charts-grid,
+      .kpi-strip {
+        grid-template-columns: 1fr;
+      }
+      .charts-grid {
+        grid-template-rows: repeat(4, 230px);
+      }
+      .heat-panel {
+        min-height: 340px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="page-topbar">
+    <div class="page-topbar-inner">
+      <div>
+        <h1>全球海洋碳汇压力的时空分异与风-浪驱动机制分析</h1>
+        <div class="subtitle">
+          <span class="pill">成员 D 独立题目</span>
+          <span class="pill">实验2同一数据集</span>
+          <span class="pill">CO₂ / SST / 风速 / 浪高 / 叶绿素</span>
+          <span class="pill">总览→解释图联动</span>
+        </div>
+        <p class="topic-note">
+          目标：把海洋碳汇压力拆解为碳浓度、暖水背景、风浪扰动、生物缓冲和盐度偏离五类因素，识别不同海域在 2020-2022 年的高压时段和主要驱动机制。
+        </p>
+      </div>
+      <div class="controls">
+        <label>关注海域
+          <select id="region-select"></select>
+        </label>
+        <label>月份
+          <input id="month-slider" type="range" min="0" value="0" />
+        </label>
+        <span class="month-readout" id="month-readout">全时段</span>
+        <button id="reset-btn">重置总览</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="overview-grid" id="overview-section">
+      <div class="kpi-strip" id="kpi-strip">
+        <div class="kpi">
+          <div class="label">全球平均碳汇压力</div>
+          <div class="value" id="kpi-global">--</div>
+          <div class="hint">0-100，越高表示碳汇压力越大</div>
+        </div>
+        <div class="kpi">
+          <div class="label">高压月份最多海域</div>
+          <div class="value" id="kpi-risk-region">--</div>
+          <div class="hint" id="kpi-risk-hint">--</div>
+        </div>
+        <div class="kpi">
+          <div class="label">主导驱动因素</div>
+          <div class="value" id="kpi-driver">--</div>
+          <div class="hint">基于全局贡献均值</div>
+        </div>
+        <div class="kpi">
+          <div class="label">当前解释对象</div>
+          <div class="value" id="kpi-current">--</div>
+          <div class="hint">点击总览卡片或热力格进入解释图</div>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">海域碳汇压力状态总览</div>
+          <div class="panel-sub">首屏先看结论，不堆叠原始点</div>
+        </div>
+        <div class="region-cards" id="region-cards"></div>
+      </section>
+
+      <section class="panel heat-panel">
+        <div class="panel-head">
+          <div class="panel-title">海域-月份碳汇压力热力矩阵</div>
+          <div class="panel-sub">点击单元格跳转解释图</div>
+        </div>
+        <div class="heat-wrap">
+          <svg id="heatmap-svg" viewBox="0 0 720 330" role="img" aria-label="海域月份碳汇压力热力矩阵"></svg>
+        </div>
+      </section>
+    </section>
+
+    <section class="explain-panel" id="explain-section">
+      <section class="panel explain-summary">
+        <div class="explain-title">
+          <h2 id="explain-heading">解释图</h2>
+          <span class="chosen-badge" id="chosen-badge">--</span>
+        </div>
+        <p class="summary-text" id="summary-text">点击上方任意海域卡片或热力格，查看该状态背后的驱动因素。</p>
+        <div class="insight-list">
+          <div class="insight">
+            <b>状态判断</b>
+            <span id="insight-state">--</span>
+          </div>
+          <div class="insight">
+            <b>关键驱动</b>
+            <span id="insight-driver">--</span>
+          </div>
+          <div class="insight">
+            <b>时序位置</b>
+            <span id="insight-time">--</span>
+          </div>
+        </div>
+        <div class="formula">
+          <b>碳汇压力指数：</b>
+          CO₂浓度 30% + 暖水背景 22% + 风浪扰动 20% + 生物缓冲不足 18% + 盐度偏离 10%。
+          该指数用于相对比较，不替代真实碳通量模型。
+        </div>
+      </section>
+
+      <section class="charts-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">驱动贡献解释图</div>
+            <div class="panel-sub">当前海域/月份</div>
+          </div>
+          <div class="chart-body"><svg id="driver-svg" viewBox="0 0 420 180"></svg></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">碳汇压力月度演变</div>
+            <div class="panel-sub">点击月份更新解释对象</div>
+          </div>
+          <div class="chart-body"><svg id="timeline-svg" viewBox="0 0 420 180"></svg></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">CO₂-SST 机制散点</div>
+            <div class="panel-sub">高压样本自动高亮</div>
+          </div>
+          <div class="chart-body"><svg id="scatter-svg" viewBox="0 0 420 180"></svg></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">状态构成与分析任务</div>
+            <div class="panel-sub">Analyze / Search / Query</div>
+          </div>
+          <div class="chart-body"><svg id="state-svg" viewBox="0 0 420 180"></svg></div>
+        </section>
+      </section>
+    </section>
+  </main>
+</div>
+
+<div id="tooltip"></div>
+
+<script src="assets/d3.v7.min.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/nav.js"></script>
+<script src="data/original-dataset.js"></script>
+<script src="assets/data-adapter.js"></script>
+<script>
+const REGION_ORDER = Adapter.REGIONS;
+const REGION_COLORS = Adapter.COLORS;
+const DRIVERS = [
+  { key: "co2Stress", label: "CO₂浓度", short: "CO₂", weight: 0.30, desc: "高 CO₂ 背景提高碳汇压力" },
+  { key: "warmStress", label: "暖水背景", short: "暖水", weight: 0.22, desc: "高海温降低溶解与缓冲能力" },
+  { key: "windWaveStress", label: "风浪扰动", short: "风浪", weight: 0.20, desc: "风速和浪高增强海气交换扰动" },
+  { key: "bioStress", label: "生物缓冲不足", short: "生物", weight: 0.18, desc: "叶绿素偏低代表生物吸收缓冲不足" },
+  { key: "salinityStress", label: "盐度偏离", short: "盐度", weight: 0.10, desc: "盐度偏离区域背景反映水团异常" }
+];
+const STATES = [
+  { key: "high", label: "高压外逸风险", color: "#D55E00" },
+  { key: "exchange", label: "风浪交换增强", color: "#E69F00" },
+  { key: "bio", label: "生物缓冲较强", color: "#009E73" },
+  { key: "stable", label: "低压稳定", color: "#0072B2" },
+  { key: "mid", label: "中等波动", color: "#7A8FA6" }
+];
+const HIGH_THRESHOLD = 60;
+const stateByKey = new Map(STATES.map(d => [d.key, d]));
+const fmt = d3.format(".1f");
+const fmt2 = d3.format(".2f");
+const tooltip = d3.select("#tooltip");
+const state = {
+  region: "太平洋",
+  month: null,
+  scrollOnSelect: false
+};
+let records = [];
+let monthKeys = [];
+let regionSummary = [];
+let regionMonth = [];
+let globalSummary = null;
+let pressureColor = null;
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, v));
+}
+
+function quantileScale(data, key, invert = false) {
+  const values = data
+    .map(d => +d[key])
+    .filter(v => Number.isFinite(v))
+    .sort((a, b) => a - b);
+  const lo = d3.quantile(values, .03);
+  const hi = d3.quantile(values, .97);
+  const span = hi === lo ? 1 : hi - lo;
+  return value => {
+    const n = clamp01(((+value) - lo) / span);
+    return invert ? 1 - n : n;
+  };
+}
+
+function medianByRegion(data, key) {
+  return new Map(REGION_ORDER.map(region => {
+    const values = data
+      .filter(d => d.region === region)
+      .map(d => +d[key])
+      .filter(v => Number.isFinite(v) && v > 20 && v < 45)
+      .sort((a, b) => a - b);
+    return [region, d3.median(values) || 35];
+  }));
+}
+
+function deriveRecords(data) {
+  const nCo2 = quantileScale(data, "co2");
+  const nSst = quantileScale(data, "sst");
+  const nWind = quantileScale(data, "wind_speed");
+  const nWave = quantileScale(data, "wave_height");
+  const nBio = quantileScale(data, "chlorophyll", true);
+  const salinityMedian = medianByRegion(data, "salinity");
+
+  return data.map(row => {
+    const salinity = +row.salinity;
+    const regionMedian = salinityMedian.get(row.region) || 35;
+    const salinityStress = Number.isFinite(salinity) && salinity > 20 && salinity < 45
+      ? clamp01(Math.abs(salinity - regionMedian) / 3.2)
+      : 0.55;
+    const windWaveStress = (nWind(row.wind_speed) + nWave(row.wave_height)) / 2;
+    const derived = {
+      co2Stress: nCo2(row.co2),
+      warmStress: nSst(row.sst),
+      windWaveStress,
+      bioStress: nBio(row.chlorophyll),
+      salinityStress
+    };
+    const pressure = DRIVERS.reduce((sum, d) => sum + derived[d.key] * d.weight, 0) * 100;
+    const stateInfo = classifyState(pressure, derived);
+    return {
+      ...row,
+      month: row.time.slice(0, 7),
+      pressure,
+      stateKey: stateInfo.key,
+      stateLabel: stateInfo.label,
+      stateColor: stateInfo.color,
+      ...derived
+    };
+  });
+}
+
+function classifyState(pressure, d) {
+  if (pressure >= HIGH_THRESHOLD) return stateByKey.get("high");
+  if (pressure >= 55 && d.windWaveStress >= .62) return stateByKey.get("exchange");
+  if (pressure <= 48 && d.bioStress <= .38) return stateByKey.get("bio");
+  if (pressure <= 42) return stateByKey.get("stable");
+  return stateByKey.get("mid");
+}
+
+function aggregate() {
+  monthKeys = Array.from(new Set(records.map(d => d.month))).sort();
+  pressureColor = d3.scaleSequential()
+    .domain([35, 75])
+    .interpolator(d3.interpolateYlOrRd)
+    .clamp(true);
+
+  regionMonth = [];
+  REGION_ORDER.forEach(region => {
+    monthKeys.forEach(month => {
+      const subset = records.filter(d => d.region === region && d.month === month);
+      regionMonth.push(summarizeSubset(subset, region, month));
+    });
+  });
+
+  regionSummary = REGION_ORDER.map(region => {
+    const subset = records.filter(d => d.region === region);
+    const monthly = regionMonth.filter(d => d.region === region);
+    const summary = summarizeSubset(subset, region, null);
+    summary.monthly = monthly;
+    summary.highMonths = monthly.filter(d => d.pressure >= HIGH_THRESHOLD).length;
+    summary.trend = monthlySlope(monthly);
+    summary.dominantState = mode(subset.map(d => d.stateKey));
+    return summary;
+  });
+  globalSummary = summarizeSubset(records, "全球", null);
+}
+
+function summarizeSubset(subset, region, month) {
+  const safe = subset.length ? subset : [];
+  const driverMeans = Object.fromEntries(DRIVERS.map(d => [d.key, d3.mean(safe, r => r[d.key]) || 0]));
+  const contributions = DRIVERS.map(d => ({
+    ...d,
+    raw: driverMeans[d.key],
+    contribution: driverMeans[d.key] * d.weight * 100
+  })).sort((a, b) => b.contribution - a.contribution);
+  const pressure = d3.mean(safe, d => d.pressure) || 0;
+  const stateKey = mode(safe.map(d => d.stateKey)) || classifyState(pressure, driverMeans).key;
+  return {
+    region,
+    month,
+    count: safe.length,
+    pressure,
+    highCount: safe.filter(d => d.pressure >= HIGH_THRESHOLD).length,
+    co2: d3.mean(safe, d => +d.co2) || 0,
+    sst: d3.mean(safe, d => +d.sst) || 0,
+    chlorophyll: d3.mean(safe, d => +d.chlorophyll) || 0,
+    wind: d3.mean(safe, d => +d.wind_speed) || 0,
+    wave: d3.mean(safe, d => +d.wave_height) || 0,
+    contributions,
+    stateKey,
+    stateLabel: stateByKey.get(stateKey)?.label || "中等波动",
+    stateColor: stateByKey.get(stateKey)?.color || "#7A8FA6"
+  };
+}
+
+function mode(values) {
+  const counts = d3.rollup(values.filter(Boolean), v => v.length, d => d);
+  let best = null;
+  let bestCount = -1;
+  for (const [key, count] of counts) {
+    if (count > bestCount) {
+      best = key;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+function monthlySlope(monthly) {
+  const pts = monthly.map((d, i) => [i, d.pressure]).filter(d => Number.isFinite(d[1]));
+  if (pts.length < 2) return 0;
+  const mx = d3.mean(pts, d => d[0]);
+  const my = d3.mean(pts, d => d[1]);
+  const num = d3.sum(pts, d => (d[0] - mx) * (d[1] - my));
+  const den = d3.sum(pts, d => (d[0] - mx) ** 2);
+  return den ? num / den : 0;
+}
+
+function initControls() {
+  d3.select("#region-select")
+    .selectAll("option")
+    .data(REGION_ORDER)
+    .join("option")
+      .attr("value", d => d)
+      .text(d => d);
+  d3.select("#region-select").property("value", state.region);
+  d3.select("#region-select").on("change", event => {
+    selectContext(event.target.value, state.month, true);
+  });
+
+  d3.select("#month-slider")
+    .attr("max", monthKeys.length)
+    .property("value", monthKeys.length)
+    .on("input", event => {
+      const idx = +event.target.value;
+      const month = idx >= monthKeys.length ? null : monthKeys[idx];
+      selectContext(state.region, month, false);
+    });
+
+  d3.select("#reset-btn").on("click", () => {
+    state.region = "太平洋";
+    state.month = null;
+    d3.select("#region-select").property("value", state.region);
+    d3.select("#month-slider").property("value", monthKeys.length);
+    renderAll();
+    document.getElementById("overview-section").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function selectContext(region, month, jump) {
+  state.region = region;
+  state.month = month;
+  d3.select("#region-select").property("value", region);
+  d3.select("#month-slider").property("value", month ? monthKeys.indexOf(month) : monthKeys.length);
+  renderAll();
+  if (jump) {
+    document.getElementById("explain-section").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function renderAll() {
+  renderKpis();
+  renderCards();
+  renderHeatmap();
+  renderExplanation();
+  renderDrivers();
+  renderTimeline();
+  renderScatter();
+  renderStates();
+}
+
+function renderKpis() {
+  const risk = [...regionSummary].sort((a, b) => b.highMonths - a.highMonths)[0];
+  const topDriver = topDriverOf(globalSummary);
+  d3.select("#kpi-global").text(fmt(globalSummary.pressure));
+  d3.select("#kpi-risk-region").text(risk.region);
+  d3.select("#kpi-risk-hint").text(`${risk.highMonths} 个高压月，平均指数 ${fmt(risk.pressure)}`);
+  d3.select("#kpi-driver").text(topDriver.short);
+  d3.select("#kpi-current").text(state.month ? `${state.region} ${state.month}` : state.region);
+  d3.select("#month-readout").text(state.month || "全时段");
+}
+
+function renderCards() {
+  const cards = d3.select("#region-cards")
+    .selectAll(".region-card")
+    .data(regionSummary, d => d.region)
+    .join("div")
+      .attr("class", d => `region-card${d.region === state.region ? " active" : ""}`)
+      .on("click", (event, d) => selectContext(d.region, state.month, true));
+
+  cards.each(function(d) {
+    const el = d3.select(this);
+    el.html("");
+    el.append("div")
+      .attr("class", "region-top")
+      .html(`
+        <span class="region-name"><span class="dot" style="background:${REGION_COLORS[d.region]}"></span>${d.region}</span>
+        <span class="state-badge" style="background:${d.stateColor}">${d.stateLabel}</span>
+      `);
+    el.append("div")
+      .attr("class", "score-row")
+      .html(`
+        <div class="score">${fmt(d.pressure)}</div>
+        <div class="score-label">平均碳汇<br>压力指数</div>
+      `);
+    el.append("svg").attr("class", "spark").attr("viewBox", "0 0 180 36");
+    el.append("div")
+      .attr("class", "card-foot")
+      .html(`
+        <span>高压月 <b>${d.highMonths}</b></span>
+        <span>趋势 <b>${d.trend >= 0 ? "+" : ""}${fmt2(d.trend)}</b></span>
+        <span>主驱动 <b>${topDriverOf(d).short}</b></span>
+        <span>样本 <b>${d.count}</b></span>
+      `);
+    drawSpark(el.select("svg"), d.monthly, d.region === state.region);
+  });
+}
+
+function drawSpark(svg, monthly, active) {
+  svg.selectAll("*").remove();
+  const width = 180;
+  const height = 36;
+  const x = d3.scalePoint().domain(monthKeys).range([5, width - 5]);
+  const y = d3.scaleLinear().domain([30, 80]).range([height - 5, 5]);
+  const area = d3.area()
+    .x(d => x(d.month))
+    .y0(height - 4)
+    .y1(d => y(d.pressure))
+    .curve(d3.curveMonotoneX);
+  const line = d3.line()
+    .x(d => x(d.month))
+    .y(d => y(d.pressure))
+    .curve(d3.curveMonotoneX);
+  svg.append("path")
+    .datum(monthly)
+    .attr("d", area)
+    .attr("fill", active ? "rgba(0,114,178,.16)" : "rgba(122,143,166,.14)");
+  svg.append("path")
+    .datum(monthly)
+    .attr("d", line)
+    .attr("fill", "none")
+    .attr("stroke", active ? "#0072B2" : "#7A8FA6")
+    .attr("stroke-width", active ? 2.2 : 1.6);
+  svg.append("line")
+    .attr("x1", 5).attr("x2", width - 5)
+    .attr("y1", y(HIGH_THRESHOLD)).attr("y2", y(HIGH_THRESHOLD))
+    .attr("stroke", "#D55E00")
+    .attr("stroke-width", .8)
+    .attr("stroke-dasharray", "3 3")
+    .attr("opacity", .62);
+}
+
+function renderHeatmap() {
+  const svg = d3.select("#heatmap-svg");
+  svg.selectAll("*").remove();
+  const margin = { top: 20, right: 18, bottom: 40, left: 74 };
+  const width = 720 - margin.left - margin.right;
+  const height = 330 - margin.top - margin.bottom;
+  const cellW = width / monthKeys.length;
+  const cellH = height / REGION_ORDER.length;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  g.selectAll("rect")
+    .data(regionMonth)
+    .join("rect")
+      .attr("class", d => `heat-cell${d.region === state.region && d.month === state.month ? " active" : ""}`)
+      .attr("x", d => monthKeys.indexOf(d.month) * cellW)
+      .attr("y", d => REGION_ORDER.indexOf(d.region) * cellH)
+      .attr("width", Math.max(1, cellW))
+      .attr("height", cellH)
+      .attr("fill", d => pressureColor(d.pressure))
+      .attr("opacity", d => d.region === state.region || !state.month ? .96 : .58)
+      .on("mouseenter", (event, d) => showTooltip(event, `
+        <strong>${d.region} · ${d.month}</strong>
+        碳汇压力: ${fmt(d.pressure)}<br>
+        状态: ${d.stateLabel}<br>
+        主驱动: ${topDriverOf(d).label}<br>
+        点击进入解释图
+      `))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip)
+      .on("click", (event, d) => selectContext(d.region, d.month, true));
+
+  g.append("g")
+    .selectAll("text")
+    .data(REGION_ORDER)
+    .join("text")
+      .attr("x", -10)
+      .attr("y", (d, i) => i * cellH + cellH / 2 + 4)
+      .attr("text-anchor", "end")
+      .attr("font-size", 12)
+      .attr("font-weight", 850)
+      .attr("fill", d => REGION_COLORS[d])
+      .text(d => d);
+
+  g.append("g")
+    .selectAll("text")
+    .data(monthKeys.filter((_, i) => i % 3 === 0))
+    .join("text")
+      .attr("x", d => monthKeys.indexOf(d) * cellW + cellW / 2)
+      .attr("y", height + 21)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 10)
+      .attr("fill", "#65798e")
+      .text(d => d.slice(2));
+
+  if (state.month) {
+    const x = monthKeys.indexOf(state.month) * cellW + cellW / 2;
+    g.append("line")
+      .attr("x1", x).attr("x2", x)
+      .attr("y1", 0).attr("y2", height)
+      .attr("stroke", "#10263f")
+      .attr("stroke-width", 1.7)
+      .attr("stroke-dasharray", "4 3");
+  }
+
+  const legend = svg.append("g").attr("transform", "translate(475,300)");
+  const defs = svg.append("defs");
+  const grad = defs.append("linearGradient").attr("id", "pressureLegend").attr("x1", "0%").attr("x2", "100%");
+  d3.range(0, 1.001, .2).forEach(t => {
+    grad.append("stop")
+      .attr("offset", `${t * 100}%`)
+      .attr("stop-color", pressureColor(35 + t * 40));
+  });
+  legend.append("rect").attr("width", 150).attr("height", 10).attr("rx", 5).attr("fill", "url(#pressureLegend)");
+  legend.append("text").attr("x", 0).attr("y", 25).attr("font-size", 10).attr("fill", "#65798e").text("低压");
+  legend.append("text").attr("x", 150).attr("y", 25).attr("text-anchor", "end").attr("font-size", 10).attr("fill", "#65798e").text("高压");
+}
+
+function renderExplanation() {
+  const summary = currentSummary();
+  const driver = topDriverOf(summary);
+  const regionRank = [...regionSummary].sort((a, b) => b.pressure - a.pressure).findIndex(d => d.region === state.region) + 1;
+  d3.select("#explain-heading").text(`${state.region} · ${state.month || "全时段"} 碳汇压力解释`);
+  d3.select("#chosen-badge").text(`${summary.stateLabel} · 指数 ${fmt(summary.pressure)}`);
+  d3.select("#summary-text").html(`
+    当前对象的平均碳汇压力指数为 <b>${fmt(summary.pressure)}</b>，样本数 <b>${summary.count}</b>。
+    主要由 <b>${driver.label}</b> 驱动；该海域在 6 个海域中的全时段压力排名为第 <b>${regionRank}</b>。
+  `);
+  d3.select("#insight-state").text(`${summary.stateLabel}。高压阈值为 ${HIGH_THRESHOLD}，当前高压样本占比 ${fmt(summary.highCount / Math.max(1, summary.count) * 100)}%。`);
+  d3.select("#insight-driver").text(`${driver.label}贡献 ${fmt(driver.contribution)} 分：${driver.desc}。`);
+  const trendText = state.month
+    ? `${state.month} 在该海域 36 个月序列中的位置已在月度演变图中标出。`
+    : `全时段趋势斜率 ${fmt2(regionSummary.find(d => d.region === state.region).trend)}，正值表示压力逐月上行。`;
+  d3.select("#insight-time").text(trendText);
+}
+
+function currentSummary() {
+  if (state.month) {
+    return regionMonth.find(d => d.region === state.region && d.month === state.month);
+  }
+  return regionSummary.find(d => d.region === state.region);
+}
+
+function topDriverOf(summary) {
+  return summary.contributions[0];
+}
+
+function renderDrivers() {
+  const svg = d3.select("#driver-svg");
+  svg.selectAll("*").remove();
+  const summary = currentSummary();
+  const data = [...summary.contributions].sort((a, b) => a.contribution - b.contribution);
+  const margin = { top: 8, right: 34, bottom: 20, left: 86 };
+  const width = 420 - margin.left - margin.right;
+  const height = 180 - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear().domain([0, d3.max(data, d => d.contribution) || 1]).nice().range([0, width]);
+  const y = d3.scaleBand().domain(data.map(d => d.label)).range([height, 0]).padding(.22);
+
+  g.append("g")
+    .attr("class", "axis")
+    .call(d3.axisLeft(y).tickSize(0))
+    .call(s => s.select(".domain").remove());
+  g.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(4));
+
+  g.selectAll("rect")
+    .data(data)
+    .join("rect")
+      .attr("class", "driver-bar")
+      .attr("x", 0)
+      .attr("y", d => y(d.label))
+      .attr("width", d => x(d.contribution))
+      .attr("height", y.bandwidth())
+      .attr("rx", 4)
+      .attr("fill", (d, i) => d3.schemeTableau10[i])
+      .on("mouseenter", (event, d) => showTooltip(event, `
+        <strong>${d.label}</strong>
+        贡献: ${fmt(d.contribution)} 分<br>
+        权重: ${Math.round(d.weight * 100)}%<br>
+        ${d.desc}
+      `))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
+
+  g.selectAll(".bar-label")
+    .data(data)
+    .join("text")
+      .attr("x", d => x(d.contribution) + 5)
+      .attr("y", d => y(d.label) + y.bandwidth() / 2 + 4)
+      .attr("font-size", 10)
+      .attr("fill", "#52677c")
+      .text(d => fmt(d.contribution));
+}
+
+function renderTimeline() {
+  const svg = d3.select("#timeline-svg");
+  svg.selectAll("*").remove();
+  const monthly = regionMonth.filter(d => d.region === state.region);
+  const margin = { top: 12, right: 16, bottom: 34, left: 42 };
+  const width = 420 - margin.left - margin.right;
+  const height = 180 - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scalePoint().domain(monthKeys).range([0, width]);
+  const y = d3.scaleLinear().domain([30, 82]).range([height, 0]);
+  const line = d3.line().x(d => x(d.month)).y(d => y(d.pressure)).curve(d3.curveMonotoneX);
+  const area = d3.area().x(d => x(d.month)).y0(height).y1(d => y(d.pressure)).curve(d3.curveMonotoneX);
+
+  g.append("g")
+    .selectAll("line")
+    .data(y.ticks(4))
+    .join("line")
+      .attr("class", "grid-line")
+      .attr("x1", 0).attr("x2", width)
+      .attr("y1", d => y(d)).attr("y2", d => y(d));
+  g.append("path").datum(monthly).attr("class", "timeline-area").attr("d", area);
+  g.append("path").datum(monthly).attr("class", "timeline-line").attr("d", line);
+  g.append("line")
+    .attr("x1", 0).attr("x2", width)
+    .attr("y1", y(HIGH_THRESHOLD)).attr("y2", y(HIGH_THRESHOLD))
+    .attr("stroke", "#D55E00")
+    .attr("stroke-dasharray", "4 3")
+    .attr("opacity", .72);
+
+  g.selectAll("circle")
+    .data(monthly)
+    .join("circle")
+      .attr("cx", d => x(d.month))
+      .attr("cy", d => y(d.pressure))
+      .attr("r", d => d.month === state.month ? 5 : 3)
+      .attr("fill", d => d.month === state.month ? "#10263f" : pressureColor(d.pressure))
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.2)
+      .style("cursor", "pointer")
+      .on("mouseenter", (event, d) => showTooltip(event, `
+        <strong>${d.region} · ${d.month}</strong>
+        碳汇压力: ${fmt(d.pressure)}<br>
+        状态: ${d.stateLabel}<br>
+        点击切换到该月份
+      `))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip)
+      .on("click", (event, d) => selectContext(d.region, d.month, false));
+
+  g.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).tickValues(monthKeys.filter((_, i) => i % 6 === 0)).tickFormat(d => d.slice(2)));
+  g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4));
+}
+
+function renderScatter() {
+  const svg = d3.select("#scatter-svg");
+  svg.selectAll("*").remove();
+  let data = records.filter(d => d.region === state.region);
+  if (state.month) data = data.filter(d => d.month === state.month);
+  const sample = data.length > 650 ? data.filter((_, i) => i % Math.ceil(data.length / 650) === 0) : data;
+  const margin = { top: 12, right: 16, bottom: 34, left: 45 };
+  const width = 420 - margin.left - margin.right;
+  const height = 180 - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear().domain(d3.extent(records, d => +d.co2)).nice().range([0, width]);
+  const y = d3.scaleLinear().domain(d3.extent(records, d => +d.sst)).nice().range([height, 0]);
+  const r = d3.scaleSqrt().domain(d3.extent(records, d => +d.wind_speed)).range([2.4, 6.8]);
+
+  g.append("g")
+    .selectAll("line")
+    .data(y.ticks(4))
+    .join("line")
+      .attr("class", "grid-line")
+      .attr("x1", 0).attr("x2", width)
+      .attr("y1", d => y(d)).attr("y2", d => y(d));
+  g.selectAll("circle")
+    .data(sample, d => d.id)
+    .join("circle")
+      .attr("class", d => `scatter-dot${d.pressure >= HIGH_THRESHOLD ? " highlight" : ""}`)
+      .attr("cx", d => x(+d.co2))
+      .attr("cy", d => y(+d.sst))
+      .attr("r", d => r(+d.wind_speed))
+      .attr("fill", d => pressureColor(d.pressure))
+      .on("mouseenter", (event, d) => showTooltip(event, `
+        <strong>${d.region} · ${d.time}</strong>
+        CO₂: ${fmt(+d.co2)} ppm<br>
+        SST: ${fmt(+d.sst)} °C<br>
+        压力指数: ${fmt(d.pressure)}<br>
+        风速: ${fmt(+d.wind_speed)} km/h
+      `))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
+
+  g.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(5));
+  g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(4));
+  g.append("text").attr("x", width / 2).attr("y", height + 31).attr("text-anchor", "middle").attr("font-size", 11).attr("fill", "#667b91").text("CO₂ 浓度 (ppm)");
+  g.append("text").attr("x", -height / 2).attr("y", -34).attr("transform", "rotate(-90)").attr("text-anchor", "middle").attr("font-size", 11).attr("fill", "#667b91").text("海表温度 SST (°C)");
+}
+
+function renderStates() {
+  const svg = d3.select("#state-svg");
+  svg.selectAll("*").remove();
+  const data = records.filter(d => d.region === state.region && (!state.month || d.month === state.month));
+  const counts = STATES.map(s => ({
+    ...s,
+    count: data.filter(d => d.stateKey === s.key).length
+  })).filter(d => d.count > 0).sort((a, b) => b.count - a.count);
+  const margin = { top: 12, right: 18, bottom: 42, left: 98 };
+  const width = 420 - margin.left - margin.right;
+  const height = 180 - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear().domain([0, d3.max(counts, d => d.count) || 1]).nice().range([0, width]);
+  const y = d3.scaleBand().domain(counts.map(d => d.label)).range([0, height]).padding(.18);
+
+  g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0)).call(s => s.select(".domain").remove());
+  g.append("g").attr("class", "axis").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(4));
+
+  g.selectAll("rect")
+    .data(counts)
+    .join("rect")
+      .attr("class", "state-row")
+      .attr("x", 0)
+      .attr("y", d => y(d.label))
+      .attr("width", d => x(d.count))
+      .attr("height", y.bandwidth())
+      .attr("rx", 4)
+      .attr("fill", d => d.color)
+      .attr("opacity", .86)
+      .on("mouseenter", (event, d) => showTooltip(event, `
+        <strong>${d.label}</strong>
+        样本数: ${d.count} 条<br>
+        占比: ${fmt(d.count / Math.max(1, data.length) * 100)}%
+      `))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
+
+  const tasks = [
+    { label: "Analyze", text: "识别高压海域" },
+    { label: "Search", text: "定位异常月份" },
+    { label: "Query", text: "追问驱动因素" }
+  ];
+  const task = svg.append("g").attr("transform", "translate(18,154)");
+  task.selectAll("text")
+    .data(tasks)
+    .join("text")
+      .attr("x", (d, i) => i * 132)
+      .attr("y", 0)
+      .attr("font-size", 11)
+      .attr("fill", "#53677e")
+      .html(d => `<tspan font-weight="850" fill="#10263f">${d.label}</tspan><tspan dx="4">${d.text}</tspan>`);
+}
+
+function showTooltip(event, html) {
+  tooltip.style("opacity", 1).html(html);
+  moveTooltip(event);
+}
+
+function moveTooltip(event) {
+  tooltip
+    .style("left", `${event.clientX + 14}px`)
+    .style("top", `${event.clientY - 12}px`);
+}
+
+function hideTooltip() {
+  tooltip.style("opacity", 0);
+}
+
+Adapter.load().then(data => {
+  records = deriveRecords(data);
+  aggregate();
+  initControls();
+  renderAll();
+  console.log(
+    "%c成员D个人题目已加载%c | 全球海洋碳汇压力的时空分异与风-浪驱动机制分析",
+    "color:#0072B2;font-weight:bold;",
+    "color:#666;"
+  );
+}).catch(err => {
+  document.body.innerHTML = `<div style="padding:24px;font-family:Microsoft YaHei;color:#a33;">数据加载失败：${err.message}</div>`;
+});
+</script>
+</body>
+</html>
