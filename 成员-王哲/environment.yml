@@ -1,0 +1,11 @@
+# conda 环境定义（开发文档「二、技术栈」指定的 ocean-vis 环境）
+# 重建命令：conda env create -f environment.yml
+name: ocean-vis
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scikit-learn
+  - statsmodels

@@ -163,9 +163,9 @@ def api_raw_data():
 
 @app.route("/")
 def index():
-    """主页：王哲的 SST 距平分析"""
+    """主页：王哲的海洋-大气多维耦合分析（frontend/ 自包含离线系统）"""
     return send_from_directory(
-        os.path.join(ROOT_DIR, "成员-王哲", "A", "static"), "index.html"
+        os.path.join(ROOT_DIR, "成员-王哲", "frontend"), "index.html"
     )
 
 
@@ -198,26 +198,24 @@ def page_xu():
     )
 
 
-# 静态资源：王哲目录下的 CSS/JS
-@app.route("/static/css/style.css")
-def static_wang_css():
-    return send_from_directory(
-        os.path.join(ROOT_DIR, "成员-王哲", "A", "static", "css"), "style.css"
-    )
+# 静态资源：王哲主页（frontend/）通过相对路径引用的 css/js/lib
+#   页面在 "/" 提供，相对路径 css/、js/、lib/ 解析为根级 /css /js /lib
+_WANG_FRONTEND = os.path.join(ROOT_DIR, "成员-王哲", "frontend")
 
 
-@app.route("/static/js/main.js")
-def static_wang_main_js():
-    return send_from_directory(
-        os.path.join(ROOT_DIR, "成员-王哲", "A", "static", "js"), "main.js"
-    )
+@app.route("/css/<path:filename>")
+def static_wang_css(filename):
+    return send_from_directory(os.path.join(_WANG_FRONTEND, "css"), filename)
 
 
-@app.route("/static/lib/world.json")
-def static_world_json():
-    return send_from_directory(
-        os.path.join(ROOT_DIR, "static", "lib"), "world.json"
-    )
+@app.route("/js/<path:filename>")
+def static_wang_js(filename):
+    return send_from_directory(os.path.join(_WANG_FRONTEND, "js"), filename)
+
+
+@app.route("/lib/<path:filename>")
+def static_wang_lib(filename):
+    return send_from_directory(os.path.join(_WANG_FRONTEND, "lib"), filename)
 
 
 # 成员静态资源
