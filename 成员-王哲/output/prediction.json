@@ -6432,7 +6432,7 @@
       "time": "2022-01-21",
       "region": "赤道区域",
       "y_true": 26.89,
-      "y_pred": 27.175,
+      "y_pred": 27.174,
       "y_pred_lr": 25.869,
       "baseline": 17.8589,
       "contributions": {

@@ -23,7 +23,9 @@ import pandas as pd
 # 路径常量：以 code/ 的上一级作为项目根，保证任意工作目录下都能跑通
 # ----------------------------------------------------------------------------
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DATA_PATH = ROOT_DIR / "data" / "ocean_atmosphere.json"
+# 注意：文件夹名为 "Data"（首字母大写）。Linux 等大小写敏感文件系统下
+# 写成 "data" 会 FileNotFoundError，必须与磁盘/Git 中的实际名称一致。
+DATA_PATH = ROOT_DIR / "Data" / "ocean_atmosphere.json"
 OUTPUT_DIR = ROOT_DIR / "output"
 
 # ----------------------------------------------------------------------------
