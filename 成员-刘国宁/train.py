@@ -11,14 +11,13 @@
 import os
 import sys
 import json
+from backend import data_adapter as da
+from backend.model_adapter import get_registry, get_ModelInput
 
 # 确保项目根目录在 Python 路径中，兼容任意目录启动
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_SCRIPT_DIR)
 sys.path.insert(0, _PROJECT_ROOT)
-
-from backend import data_adapter as da
-from backend.model_adapter import get_registry, get_ModelInput
 
 ModelInput = get_ModelInput()
 ALL_NUM_FIELDS = da.ALL_NUMERIC_FIELDS
