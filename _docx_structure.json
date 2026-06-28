@@ -1,0 +1,238 @@
+{
+  "paragraphs": [
+    {
+      "idx": 0,
+      "style": "Normal",
+      "text": "中国海洋大学",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 1,
+      "style": "Normal",
+      "text": "《可视化技术》2026春季实验报告",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 2,
+      "style": "Normal",
+      "text": "实验编号：实验4 可视分析系统-算法集成和AI增强",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 3,
+      "style": "Normal",
+      "text": "实验名称：可视分析系统——时空数据动态交互与多视图联动开发",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 4,
+      "style": "Normal",
+      "text": "姓名：王哲  许一凡  刘国宁  程传哲",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 5,
+      "style": "Normal",
+      "text": "专业班级：大数据科学与技术  软件工程",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 6,
+      "style": "Normal",
+      "text": "指导老师：解翠",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 7,
+      "style": "Normal",
+      "text": "实验日期：2026年 6月 15日 - 2026年 6月28 日（第14-16周）",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 8,
+      "style": "Normal",
+      "text": "提交时间：2026年 6月 28日",
+      "alignment": "CENTER (1)"
+    },
+    {
+      "idx": 9,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 10,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 11,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 12,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 13,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 14,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 15,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 16,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 17,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 18,
+      "style": "Normal",
+      "text": "一、实验概述",
+      "alignment": null
+    },
+    {
+      "idx": 19,
+      "style": "Normal",
+      "text": "（一）实验目的",
+      "alignment": null
+    },
+    {
+      "idx": 20,
+      "style": "Normal",
+      "text": "1）：理解本实验是 Tamara 四级嵌套模型“算法层”的核心落地实验，并衔接抽象层与任务层，完成可视分析全流程理论闭环。",
+      "alignment": null
+    },
+    {
+      "idx": 21,
+      "style": "Normal",
+      "text": "2）：每人掌握 异腾 ModelArts 的 OBS 数据管理、Notebook 使用、机器学习训练基础能力。",
+      "alignment": null
+    },
+    {
+      "idx": 22,
+      "style": "Normal",
+      "text": "3）：小组掌握 异腾 MindSpore 深度学习训练、模型部署、API 生成。",
+      "alignment": null
+    },
+    {
+      "idx": 23,
+      "style": "Normal",
+      "text": "4）：每人完成 1 种标准时空数据变换，提升数据质量，支撑可视化与机器学习分析。",
+      "alignment": null
+    },
+    {
+      "idx": 24,
+      "style": "Normal",
+      "text": "5）：每人完成 1 种轻量 AI 机器学习模型的训练、推理、结果输出与可视化集成。",
+      "alignment": null
+    },
+    {
+      "idx": 25,
+      "style": "Normal",
+      "text": "6）：小组共同完成 1 种异腾 AI 深度学习模型的训练、部署、API 对接与前端实时可视化展示。",
+      "alignment": null
+    },
+    {
+      "idx": 26,
+      "style": "Normal",
+      "text": "7）：每人将个人图表、交互模块接入小组统一系统，实现图表渲染、高亮、筛选、多视图联动、API 实时调用。",
+      "alignment": null
+    },
+    {
+      "idx": 27,
+      "style": "Normal",
+      "text": "8）：每人独立完成 1 个大分析任务，覆盖 Analyze（高级）、Search（中级）、Query（低级）三级子任务。",
+      "alignment": null
+    },
+    {
+      "idx": 28,
+      "style": "Normal",
+      "text": "9）：第 16 周完成全系统整体调优、交互完善、性能优化、文档规范化与最终项目交付。",
+      "alignment": null
+    },
+    {
+      "idx": 29,
+      "style": "Normal",
+      "text": "（二）实验意义",
+      "alignment": null
+    },
+    {
+      "idx": 30,
+      "style": "Normal",
+      "text": "1）：Tamara 模型完整闭环：以算法层为核心，补齐抽象层与任务层，完成“数据→可视化→交互→分析→AI”全流程训练。",
+      "alignment": null
+    },
+    {
+      "idx": 31,
+      "style": "Normal",
+      "text": "2）：完整使用昇腾 ModelArts、昇腾 MindSpore。",
+      "alignment": null
+    },
+    {
+      "idx": 32,
+      "style": "Normal",
+      "text": "3）：工作量科学合理：每人专注基础算法，小组合力完成深度学习，时间更充裕。",
+      "alignment": null
+    },
+    {
+      "idx": 33,
+      "style": "Normal",
+      "text": "4）：工程化能力训练：多人协作、系统整合、云端开发、流程规范、成果可展示。",
+      "alignment": null
+    },
+    {
+      "idx": 34,
+      "style": "Normal",
+      "text": "5）：能力阶梯提升：在实验 1-3 基础上，从“画图交互”升级为“智能分析系统”。",
+      "alignment": null
+    },
+    {
+      "idx": 35,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    },
+    {
+      "idx": 36,
+      "style": "Normal",
+      "text": "",
+      "alignment": null
+    }
+  ],
+  "sections": [
+    {
+      "idx": 0,
+      "page_width": "7560310",
+      "page_height": "10692130",
+      "margin_top": "914400",
+      "margin_bottom": "914400",
+      "margin_left": "1143000",
+      "margin_right": "1143000"
+    }
+  ],
+  "tables": []
+}
