@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>海洋-大气多维耦合分析 · 王哲</title>
+  <!-- 统一系统共享样式（全局变量 + 顶部四页导航），先于本页样式加载 -->
+  <link rel="stylesheet" href="/static/css/global.css" />
+  <link rel="stylesheet" href="/static/css/nav.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- 本地引入，保证 file:// 双击离线可用 -->
+  <script src="lib/d3.min.js"></script>
+  <script src="lib/plotly.min.js"></script>
+  <script src="js/data-bundle.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== 顶部：标题 + 导航 + 全局动作 ===================== -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-title">海洋-大气多维耦合分析平台</span>
+      <span class="brand-sub">实验4 · 算法集成与AI增强 · 成员A 王哲</span>
+    </div>
+
+    <!-- 导航栏：点击切换视图（不滚动，单屏切换） -->
+    <nav id="nav">
+      <button class="nav-btn active" data-view="overview">总览</button>
+      <button class="nav-btn" data-view="nebula">耦合星云</button>
+      <button class="nav-btn" data-view="coupling">维度互动强度</button>
+      <button class="nav-btn" data-view="forecast">海温演变与展望</button>
+      <button class="nav-btn" data-view="waterfall">单点预测归因</button>
+    </nav>
+
+    <div class="top-actions">
+      <button id="btn-task" class="ghost-btn">任务目标</button>
+      <button id="btn-search" class="ghost-btn">多维筛选</button>
+      <button id="btn-algo" class="ghost-btn">算法说明</button>
+      <button id="btn-reset" class="ghost-btn">重置联动</button>
+    </div>
+  </header>
+
+  <!-- ===================== 主体：信息面板 + 视图区 ===================== -->
+  <main id="body">
+
+    <!-- 左侧信息面板：当前视图目标 + 选中详情 + 数据点查询(Query) -->
+    <aside id="infopanel">
+      <section class="ip-block">
+        <h3 class="ip-title">本视图目标</h3>
+        <div id="ip-goal" class="ip-goal"></div>
+      </section>
+
+      <section class="ip-block">
+        <h3 class="ip-title">选中 / 详情</h3>
+        <div id="ip-detail" class="ip-detail">
+          <p class="ip-hint">在星云图框选样本，或点击图元查看详情。</p>
+        </div>
+      </section>
+
+      <section class="ip-block">
+        <h3 class="ip-title">数据点查询 <span class="task-tag q">Query</span></h3>
+        <div class="ip-query">
+          <label>海域
+            <select id="q-region"></select>
+          </label>
+          <label>日期
+            <select id="q-date"></select>
+          </label>
+          <div id="q-result" class="q-result"></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 视图容器：同一时刻只显示一个，由导航切换 -->
+    <section id="viewarea">
+
+      <article class="view active" id="view-overview">
+        <div class="view-head">
+          <h2 class="view-name">海域碳-温状态总览</h2>
+          <p class="view-purpose">回答：数据规模有多大、各海域温度与碳排概况如何、模型整体表现怎样。</p>
+        </div>
+        <div class="view-body" id="overview-body"></div>
+      </article>
+
+      <article class="view" id="view-nebula">
+        <div class="view-head">
+          <h2 class="view-name">海域多维耦合星云 <span class="badge-innov">本组创新图表</span></h2>
+          <p class="view-purpose">回答：把16维耦合关系压进可旋转的三维空间后，各海域是否各自聚成“星云”、彼此差异有多大。可框选一批样本联动下方分析。</p>
+        </div>
+        <div class="view-body">
+          <div id="nebula-plot" class="plot-fill"></div>
+          <div class="nebula-side">
+            <div id="nebula-legend" class="legend"></div>
+            <p class="hint">提示：拖动旋转/缩放；用框选或套索工具圈出一批样本，下方“演变”“归因”视图随选区联动。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="view" id="view-coupling">
+        <div class="view-head">
+          <h2 class="view-name">维度之间的相互牵动 <span class="task-tag a">Analyze</span></h2>
+          <p class="view-purpose">回答：16个海洋-大气维度中，哪些彼此牵动最强。点击任一格，星云图按这两个维度重新着色。</p>
+        </div>
+        <div class="view-body" id="coupling-body"></div>
+      </article>
+
+      <article class="view" id="view-forecast">
+        <div class="view-head">
+          <h2 class="view-name">海温的过去、当下与未来</h2>
+          <p class="view-purpose">回答：某海域温度过去怎么变、当前什么趋势、未来半年会怎样（未来段由训练模型预测，含置信区间）。</p>
+        </div>
+        <div class="view-body">
+          <div class="ctrl-row">
+            <label>海域
+              <select id="fc-region"></select>
+            </label>
+            <label>平滑窗口 W = <span id="fc-w-val">10</span>
+              <input type="range" id="fc-window" min="2" max="40" value="10" />
+            </label>
+            <span class="ctrl-note">拖动滑块实时重算平滑曲线</span>
+          </div>
+          <div id="forecast-plot" class="plot-fill"></div>
+        </div>
+      </article>
+
+      <article class="view" id="view-waterfall">
+        <div class="view-head">
+          <h2 class="view-name">这个温度是怎么算出来的 <span class="task-tag a">Analyze</span></h2>
+          <p class="view-purpose">回答：选定一个预测样本，逐维拆解——从基准值出发，各维度把温度往上/往下推了多少，最终得到预测值。</p>
+        </div>
+        <div class="view-body">
+          <div class="ctrl-row">
+            <label>海域
+              <select id="wf-region"></select>
+            </label>
+            <label>样本
+              <select id="wf-sample"></select>
+            </label>
+          </div>
+          <div id="waterfall-plot" class="plot-fill"></div>
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <!-- ===================== 底部：状态栏 ===================== -->
+  <footer id="statusbar">
+    <span id="st-data">数据加载中…</span>
+    <span id="st-sep">|</span>
+    <span id="st-selection">未选中样本</span>
+    <span id="st-sep2">|</span>
+    <span id="st-filter">海域筛选：全部</span>
+    <span class="st-right" id="st-model"></span>
+  </footer>
+
+  <!-- ===================== 弹窗（替代纵向滚动）===================== -->
+  <div class="modal-mask" id="modal-task" hidden>
+    <div class="modal">
+      <div class="modal-head"><h3>三级分析任务目标</h3><button class="modal-x" data-close>×</button></div>
+      <div class="modal-body" id="task-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="modal-algo" hidden>
+    <div class="modal">
+      <div class="modal-head"><h3>算法说明</h3><button class="modal-x" data-close>×</button></div>
+      <div class="modal-body" id="algo-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="modal-search" hidden>
+    <div class="modal">
+      <div class="modal-head"><h3>多维条件筛选 <span class="task-tag s">Search</span></h3><button class="modal-x" data-close>×</button></div>
+      <div class="modal-body" id="search-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 数据出口 + 视图模块 + 控制器（顺序：先数据/视图，后 app 装配） -->
+<script src="js/data-adapter.js"></script>
+<script src="js/view_overview.js"></script>
+<script src="js/view_nebula.js"></script>
+<script src="js/view_heatmap.js"></script>
+<script src="js/view_forecast.js"></script>
+<script src="js/view_waterfall.js"></script>
+<script src="js/app.js"></script>
+
+<!-- 统一系统共享脚本：API 配置 + 顶部四页导航（自动注入 #global-nav） -->
+<script src="/static/js/config.js"></script>
+<script src="/static/js/nav.js"></script>
+</body>
+</html>
